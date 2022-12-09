@@ -11,13 +11,10 @@ public class SemanticMain {
     public List<double[]> listVectors = new ArrayList<>(); //Associated vectors from the csv file.
     public List<Glove> listGlove = new ArrayList<>();
     public final List<String> STOPWORDS;
-
     public SemanticMain() throws IOException {
         STOPWORDS = Toolkit.loadStopWords();
         Toolkit.loadGLOVE();
     }
-
-
     public static void main(String[] args) throws IOException {
         StopWatch mySW = new StopWatch();
         mySW.start();
@@ -47,7 +44,6 @@ public class SemanticMain {
         else
             System.out.println("Well done!\nElapsed time in milliseconds: " + mySW.getTime());
     }
-
     public List<Glove> CreateGloveList() {
         List<Glove> listResult = new ArrayList<>();
         //TODO Task 6.1
@@ -56,31 +52,29 @@ public class SemanticMain {
         }
         return listResult;
     }
-
     public List<CosSimilarityPair> WordsNearest(String _word) {
         List<CosSimilarityPair> listCosineSimilarity = new ArrayList<>();
         //TODO Task 6.2
         listGlove = CreateGloveList();
-        ArrayList<String> vocabulary = new ArrayList<>();
         boolean contains = false;
-        int index = 0;
+        int index = -1;
         for (int i = 0; i <= listGlove.size()-1; i++){
             if (listGlove.get(i).getVocabulary().equals(_word)) {
                 contains = true;
                 index = i;
                 break;
             }
+            else if (listGlove.get(i).getVocabulary().equals("error")){ index = i; }
         }
         if (!contains){ _word = "error"; }
-        for (int i = 0; i <= listGlove.size()-1; i++) {
-            if (!_word.equals(listGlove.get(i).getVocabulary())) {
-                listCosineSimilarity.add(new CosSimilarityPair(_word, listGlove.get(i).getVocabulary(),
-                        listGlove.get(index).getVector().cosineSimilarity(listGlove.get(i).getVector())));
+        for (Glove glove : listGlove){
+            if (!_word.equals(glove.getVocabulary())) {
+                listCosineSimilarity.add(new CosSimilarityPair(_word, glove.getVocabulary(),
+                        listGlove.get(index).getVector().cosineSimilarity(glove.getVector())));
             }
         }
         return HeapSort.doHeapSort(listCosineSimilarity);
     }
-
     public List<CosSimilarityPair> WordsNearest(Vector _vector) {
         List<CosSimilarityPair> listCosineSimilarity = new ArrayList<>();
         //TODO Task 6.3
@@ -92,7 +86,6 @@ public class SemanticMain {
         }
         return HeapSort.doHeapSort(listCosineSimilarity);
     }
-
     /**
      * Method to calculate the logical analogies by using references.
      * <p>
@@ -113,8 +106,19 @@ public class SemanticMain {
     public List<CosSimilarityPair> LogicalAnalogies(String _secISRef, String _firISRef, String _firTORef, int _top) {
         List<CosSimilarityPair> listResult = new ArrayList<>();
         //TODO Task 6.4
-        if (_top >= 0) {
-
+        listGlove = CreateGloveList();
+        List<CosSimilarityPair> nearest = new ArrayList<>();
+        ArrayList<String> vocabulary = new ArrayList<>();
+        for (Glove glove : listGlove){
+            vocabulary.add(glove.getVocabulary());
+        }
+        if (vocabulary.contains(_firTORef) && vocabulary.contains(_firISRef) && vocabulary.contains(_secISRef)){
+            nearest = (WordsNearest(listGlove.get(vocabulary.indexOf(_secISRef)).getVector())).subList(0, _top);
+        }
+        for (CosSimilarityPair csp : nearest){
+            if (!csp.getWord2().equals(_firISRef) || !csp.getWord2().equals(_firTORef)){
+                listResult.add(csp);
+            }
         }
         return listResult;
     }
